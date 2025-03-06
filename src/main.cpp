@@ -79,7 +79,9 @@ auto main(int argc, char *argv[]) -> int {
     std::println("");
   }
 
-  Repo gitRepo{arguments["path"]};
+  Git::Repo& repo = Git::gimmeRepo(arguments["path"]);
+
+  repo.listCommits();
 
   return 0;
 }
