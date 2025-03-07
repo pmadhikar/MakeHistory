@@ -30,4 +30,4 @@ target_include_directories(MakeHistory PRIVATE .)
 
 target_link_libraries(MakeHistory libgit2 util libgit2package)
 
-set_property(TARGET MakeHistory PROPERTY CXX_STANDARD 23)
+target_compile_features(MakeHistory PUBLIC cxx_std_23)
