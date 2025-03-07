@@ -1,11 +1,14 @@
 #include<array>
-#include<mdspan>
+
 #include<string>
 #include<iostream>
 #include<map>
 
 #include "images/hi.hpp"
-#include "repo.hpp"
+#include "git.hpp"
+#include "images/ascii.hpp"
+#include <print>
+#include <filesystem>
 
 auto main(int argc, char *argv[]) -> int {
 
@@ -37,51 +40,75 @@ auto main(int argc, char *argv[]) -> int {
    * argument parsing
    */
 
-  std::map<std::string_view, std::string_view> arguments{};
+  std::map<std::string_view, std::string_view> config{
+  {"path", "."},
+  {"prefix", "xXx69_MakingHistory_with_yourmomxXx: "},
+  {"commits-per-day", "30"}
+  };
   
-
   if (argc % 2 == 0)
   {
     std::println("usage: MakeHistory [arg_name] [arg_value]...\n");
+    return -1;
   }
 
   for (int arg_count = 1; arg_count < argc; arg_count+=2)
   {
     std::string_view arg{argv[arg_count]};
 
+    auto value = [&argv, arg_count]()
+    {
+      return argv[arg_count+1];
+    };
+
     if (arg == "--path")
     {
-      arguments["path"] = argv[arg_count+1];
+      config.at("path") = value();
+    }
+    else if(arg == "--prefix")
+    {
+      config.at("prefix") = value();
+    }
+    else if (arg == "--commits-per-day")
+    {
+      config.at("--commits-per-day") = value();
     }
     else
     {
-      std::println("Unused argument: {} {}", arg, argv[arg_count+1]);
+      std::println("Unused argument: {} {}", arg, value());
     }
   }
 
   auto image_data = get_hi_image();
 
-  std::mdspan<int, std::extents<size_t, 7, 50>> imageMap{image_data.data()};
-
-  constexpr int defaultCommitsPerDay{30};
-
-  constexpr std::string_view commitPrefix = "xXx69_MakingHistory_with_yourmomxXx: ";
-
-  const int commitsPerDay = argc > 1 ? ::atoi(argv[1]): defaultCommitsPerDay;
-
   std::println("Writing:");
+
   for (int i = 0; i < 7; ++i)
   {
     for (int j = 0; j < 50; ++j)
     {
-      imageMap[i, j] ? std::print("{}", imageMap[i,j]) : std::print(" ");
+      int c = image_data[50*i + j];
+      c ? std::print("{}", c) : std::print(" ");
     }
     std::println("");
   }
 
-  Git::Repo& repo = Git::gimmeRepo(arguments["path"]);
+  std::println("{}", config.at("path"));
+
+  Git::Repo& repo = Git::GimmeRepo(config["path"], config["prefix"]);
 
   repo.listCommits();
+
+  auto grid = *ascii::get_char_grid('#');
+
+  for (auto row: grid.backing)
+  {
+    for (auto i : std::views::iota(0, grid.numCols))
+    {
+      row[i] ? std::print("x"): std::print(".");
+    }
+    std::println("");
+  }
 
   return 0;
 }
